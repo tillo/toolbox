@@ -144,6 +144,8 @@ def main():
 			help='Split outfile files per IP address')
 	parser.add_option('-d', '--debug', action='store_true', dest='debug',
 			help='Debug output')
+	parser.add_option('-b', '--background', action='store_true', dest='background',
+			help='Run in background (means no output control and no error checking)')
 	(options, args) = parser.parse_args()
 
 	if options.debug:
@@ -177,12 +179,15 @@ def main():
 			if debug:
 				print "+++ Starting: %s" % c
 			a = shlex.split(c)
-			p = sub.Popen(a, stdout=sub.PIPE, stderr=sub.PIPE)
-			output, errors = p.communicate()
-			e = p.returncode
-			if debug:
+			if not options.background:
+			        p = sub.Popen(a, stdout=sub.PIPE, stderr=sub.PIPE)
+			        output, errors = p.communicate()
+        			e = p.returncode
+                        else:
+        			p = sub.Popen(a, stdout=None, stderr=None)
+			if debug and not options.background:
 				print "+++ Command RC: %d" % e
-			if options.output:
+			if options.output and not options.background:
 				if options.split:
 					if debug:
 						print "+++ Spliting output files per IP address"
@@ -202,11 +207,11 @@ def main():
 						f.write("--- Stopped with exit code: %d (%s) ---\n" % (e, time.asctime()))
 					f.close()
 			else:
-				if output:
+				if not options.background and output:
 					print output.rstrip()
-				if errors:
+				if not options.background and errors:
 					print errors.rstrip()
-	if debug and options.output:
+	if debug and options.output and not options.background:
 		if options.split:
 			print "+++ Commands output saved to %s_x_x_x_x" % options.output
 		else:
